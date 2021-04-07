@@ -231,7 +231,7 @@ export default class Client extends EventEmitter {
    * @param uuid The UUID (with `-`) of the user to ban.
    */
   banUser(uuid: string) {
-    this.sendPacket('BanUser', { uuid });
+    this.sendPacket('BanUser', { user: uuid });
   }
 
   /**
@@ -241,7 +241,7 @@ export default class Client extends EventEmitter {
    * @param uuid The UUID (with `-`) of the user to unban.
    */
   unbanUser(uuid: string) {
-    this.sendPacket('UnbanUser', { uuid });
+    this.sendPacket('UnbanUser', { user: uuid });
   }
 
   /**
