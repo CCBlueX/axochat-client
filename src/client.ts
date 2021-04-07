@@ -50,6 +50,13 @@ export default class Client extends EventEmitter {
     this.webSocket.onclose = (event) => this.handleClose(event);
   }
 
+  /**
+   * Disconnects the client from the currently connected AxoChat server.
+   */
+  disconnect() {
+    this.webSocket.close();
+  }
+
   private handleOpen() {
     this.emit('open', this.webSocket);
   }
