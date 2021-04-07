@@ -40,8 +40,8 @@ export default class Client extends EventEmitter {
   connect(webSocketUrl: string) {
     this.webSocket = new WebSocket(webSocketUrl);
 
-    this.webSocket.on('open', () => this.handleOpen());
-    this.webSocket.on('message', (data) => this.handleMessage(data.toString()));
+    this.webSocket.onopen = () => this.handleOpen();
+    this.webSocket.onmessage = ({ data }) => this.handleMessage(data.toString());
   }
 
   private handleOpen() {
