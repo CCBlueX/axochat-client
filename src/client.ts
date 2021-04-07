@@ -38,6 +38,10 @@ export default class Client extends EventEmitter {
     super();
   }
 
+  /**
+   * Connects the client to the provided AxoChat server.
+   * @param webSocketUrl The websocket URL of the AxoChat server to connect to
+   */
   connect(webSocketUrl: string) {
     this.webSocket = new WebSocket(webSocketUrl);
 
