@@ -4,7 +4,7 @@
  */
 import axios from 'axios';
 import { EventEmitter } from 'events';
-import WebSocket from 'ws';
+import WebSocket from 'isomorphic-ws';
 
 import {
   ErrorEventData,
