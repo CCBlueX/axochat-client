@@ -4,6 +4,7 @@
 	"description": "JavaScript API client for AxoChat",
 	"main": "lib/index.js",
 	"repository": "git@github.com:NurMarvin/axochat-client.git",
+	"keywords": ["axochat", "client", "liquidbounce", "liquidchat"],
 	"author": {
 		"name": "Marvin Witt",
 		"email": "contact@nurmarv.in",
