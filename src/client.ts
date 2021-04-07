@@ -4,7 +4,7 @@
  */
 import axios from 'axios';
 import { EventEmitter } from 'events';
-import WebSocket from 'isomorphic-ws';
+import WebSocket, { CloseEvent } from 'isomorphic-ws';
 
 import {
   ErrorEventData,
@@ -19,6 +19,7 @@ import {
 
 export default interface Client {
   on(event: 'open', listener: (webSocket: WebSocket) => void): this;
+  on(event: 'close', listener: (event: CloseEvent) => void): this;
   on(event: 'rawPacket', listener: (data: string) => void): this;
   on(event: 'packet', listener: (packet: Packet) => void): this;
   on(event: 'error', listener: (data: ErrorEventData) => void): this;
@@ -42,10 +43,15 @@ export default class Client extends EventEmitter {
 
     this.webSocket.onopen = () => this.handleOpen();
     this.webSocket.onmessage = ({ data }) => this.handleMessage(data.toString());
+    this.webSocket.onclose = (event) => this.handleClose(event);
   }
 
   private handleOpen() {
     this.emit('open', this.webSocket);
+  }
+
+  private handleClose(event: CloseEvent) {
+    this.emit('close', event);
   }
 
   private handleMessage(data: string) {
