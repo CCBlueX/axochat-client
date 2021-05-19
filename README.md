@@ -1,5 +1,7 @@
 # AxoChat Client
 
+NPM Package: https://www.npmjs.com/package/axochat-client
+
 ## Example Usage
 ```typescript
 import Client from 'axochat-client';
