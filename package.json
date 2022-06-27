@@ -28,7 +28,7 @@
 	"license": "OSL-3.0",
 	"dependencies": {
 		"axios": "^0.22.0",
-		"isomorphic-ws": "^4.0.1",
+		"isomorphic-ws": "^5.0.0",
 		"ws": "^7.4.4"
 	},
 	"devDependencies": {
