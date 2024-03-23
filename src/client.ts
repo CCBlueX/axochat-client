@@ -1,38 +1,35 @@
 /*
- * Copyright (c) 2021 Marvin "NurMarvin" Witt
+ * Copyright (c) 2021-2024 Marvin "NurMarvin" Witt
  * Licensed under the Open Software License version 3.0
  */
-import axios from 'axios';
 import { EventEmitter } from 'events';
-import WebSocket, { CloseEvent } from 'isomorphic-ws';
+import { WebSocket, CloseEvent } from 'isomorphic-ws';
 
 import {
-  ErrorEventData,
-  MessageEventData,
-  MojangAuthenticationResponse,
-  MojangInfoEventData,
-  NewJWTEventData,
-  Packet,
-  SuccessEventData,
-  UserCountEventData,
+  NotConnectedError,
+  type ErrorEventData,
+  type MessageEventData,
+  type NewJWTEventData,
+  type Packet,
+  type SuccessEventData,
+  type UserCountEventData,
 } from './structures';
 
-export default interface Client {
+interface Client {
   on(event: 'open', listener: (webSocket: WebSocket) => void): this;
   on(event: 'close', listener: (event: CloseEvent) => void): this;
   on(event: 'rawPacket', listener: (data: string) => void): this;
   on(event: 'packet', listener: (packet: Packet) => void): this;
   on(event: 'error', listener: (data: ErrorEventData) => void): this;
   on(event: 'message', listener: (data: MessageEventData) => void): this;
-  on(event: 'mojangInfo', listener: (data: MojangInfoEventData) => void): this;
   on(event: 'newJWT', listener: (data: NewJWTEventData) => void): this;
   on(event: 'privateMessage', listener: (data: MessageEventData) => void): this;
   on(event: 'success', listener: (data: SuccessEventData) => void): this;
   on(event: 'userCount', listener: (data: UserCountEventData) => void): this;
 }
 
-export default class Client extends EventEmitter {
-  private webSocket: WebSocket;
+class Client extends EventEmitter {
+  private webSocket: WebSocket | null = null;
 
   constructor() {
     super();
@@ -45,16 +42,17 @@ export default class Client extends EventEmitter {
   connect(webSocketUrl: string) {
     this.webSocket = new WebSocket(webSocketUrl);
 
-    this.webSocket.onopen = () => this.handleOpen();
-    this.webSocket.onmessage = ({ data }) => this.handleMessage(data.toString());
-    this.webSocket.onclose = (event) => this.handleClose(event);
+    this.webSocket.on('open', this.handleOpen.bind(this));
+    this.webSocket.on('message', (data) => this.handleMessage(data.toString()));
+    this.webSocket.on('close', this.handleClose.bind(this));
   }
 
   /**
    * Disconnects the client from the currently connected AxoChat server.
    */
   disconnect() {
-    this.webSocket.close();
+    this.webSocket?.close();
+    this.webSocket = null;
   }
 
   private handleOpen() {
@@ -79,10 +77,6 @@ export default class Client extends EventEmitter {
       }
       case 'Message': {
         this.emit('message', { author: packet.c.author_info, content: packet.c.content });
-        break;
-      }
-      case 'MojangInfo': {
-        this.emit('mojangInfo', { sessionHash: packet.c.session_hash });
         break;
       }
       case 'NewJWT': {
@@ -111,82 +105,6 @@ export default class Client extends EventEmitter {
    */
   loginJWT(token: string, allowMessages: boolean = false) {
     this.sendPacket('LoginJWT', { token, allow_messages: allowMessages });
-  }
-
-  /**
-   * Login using a Mojang account.
-   *
-   * Requires the authentication flow to be completed. This can be started with the `requestMojangInfo` function.
-   * @param name The username of the user.
-   * @param uuid The UUID of the user with `-`.
-   * @param allowMessages If `true`, other clients may send private messages to this client. Defaults to `false`.
-   */
-  loginMojang(name: string, uuid: string, allowMessages: boolean = false) {
-    this.sendPacket('LoginMojang', { name, uuid, allow_messages: allowMessages });
-  }
-
-  /**
-   * Request the session hash from the AxoChat server in order to start authenticating via Mojang.
-   *
-   * A `mojangInfo` event will be emitted on the client if the server received the request and was able to process it.
-   *
-   * Afterwards it's advised to use the `authenticateMojang` function to authenticate with Mojang, though this may be skipped
-   * if you already have an `accessToken` for the account you are trying to connect to AxoChat, hence you should instead use the `joinServer`
-   * function to join the AxoServer.
-   */
-  requestMojangInfo() {
-    this.sendPacket('RequestMojangInfo');
-  }
-
-  /**
-   * Authenticates a user with Mojang's auth server using their password.
-   *
-   * Afterwards it's advised to use the `joinServer` function.
-   * @param username The username of the Mojang account.
-   * @param password The password of the Mojang account.
-   */
-  async authenticateMojang(username: string, password: string): Promise<MojangAuthenticationResponse> {
-    return await axios.post(
-      'https://authserver.mojang.com/authenticate',
-      {
-        agent: {
-          name: 'Minecraft',
-          version: 1,
-        },
-        username,
-        password,
-        requestUser: true,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-  }
-
-  /**
-   * Joins the AxoChat server.
-   *
-   * Afterwards it's advised to login to the AxoChat server using the `loginMojang` function.
-   * @param accessToken The access token of the account to join the AxoChat server with.
-   * @param selectedProfile The UUID (without `-`) of the user to authenticate as.
-   * @param sessionHash The session hash provided by the AxoChat server earlier in the authentication process.
-   */
-  async joinServer(accessToken: string, selectedProfile: string, sessionHash: string) {
-    axios.post(
-      'https://sessionserver.mojang.com/session/minecraft/join',
-      {
-        accessToken,
-        selectedProfile,
-        serverId: sessionHash,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
   }
 
   /**
@@ -252,11 +170,15 @@ export default class Client extends EventEmitter {
    * @param data The data of the packet to send
    */
   sendPacket(packetName: string, data?: any) {
+    if (!this.webSocket) throw new NotConnectedError();
+
     this.webSocket.send(
       JSON.stringify({
         m: packetName,
         c: data,
-      })
+      }),
     );
   }
 }
+
+export default Client;

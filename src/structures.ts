@@ -1,26 +1,25 @@
 /*
- * Copyright (c) 2021 Marvin "NurMarvin" Witt
+ * Copyright (c) 2021-2024 Marvin "NurMarvin" Witt
  * Licensed under the Open Software License version 3.0
  */
-export class Packet {
+export interface Packet {
   m: string;
   c: {
     [key: string]: any;
   };
 }
 
-export class AuthorInfo {
+export interface AuthorInfo {
   name: string;
   uuid: string;
 }
 
-export class ErrorEventData {
+export interface ErrorEventData {
   message:
     | 'NotSupported'
     | 'LoginFailed'
     | 'NotLoggedIn'
     | 'AlreadyLoggedIn'
-    | 'MojangRequestMissing'
     | 'NotPermitted'
     | 'NotBanned'
     | 'Banned'
@@ -33,46 +32,31 @@ export class ErrorEventData {
     | 'Internal';
 }
 
-export class MessageEventData {
+export interface MessageEventData {
   author: AuthorInfo;
   content: string;
 }
 
-export class MojangInfoEventData {
-  sessionHash: string;
-}
-
-export class NewJWTEventData {
+export interface NewJWTEventData {
   token: string;
 }
 
-export class SuccessEventData {
+export interface SuccessEventData {
   reason: 'Login' | 'Ban' | 'Unban';
 }
 
-export class UserCountEventData {
+export interface UserCountEventData {
   connections: number;
   loggedIn: number;
 }
 
-export class MojangAuthenticationResponse {
-  user?: {
-    username: string;
-    properties: [
-      {
-        name: string;
-        value: string;
-      }
-    ];
-    id: string;
-  };
-  clientToken: string;
-  accessToken: string;
-  availableProfiles: Profile[];
-  selectedProfile: Profile;
-}
-
-export class Profile {
+export interface Profile {
   name: string;
   id: string;
+}
+
+export class NotConnectedError extends Error {
+  constructor() {
+    super('The client is not connected to any server');
+  }
 }

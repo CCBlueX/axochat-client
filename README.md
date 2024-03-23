@@ -1,10 +1,13 @@
 # AxoChat Client
 
-NPM Package: https://www.npmjs.com/package/axochat-client
+NPM Package: https://www.npmjs.com/package/@ccbluex/axochat-client
 
 ## Example Usage
+
+> The LiquidBounce chat's certificate is self-signed, so you need to disable the certificate verification.
+
 ```typescript
-import Client from 'axochat-client';
+import { Client } from 'axochat-client';
 
 const client = new Client();
 
